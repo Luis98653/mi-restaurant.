@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurante Moderno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="restaurante.css">
+</head>
+
+<body>
+    <header class="admin-header">
+      <div class="header-title-group">
+        <img src="img/logo-estacion92.jpeg" alt="Logo Estación 92" class="header-logo">
+        <h1>Estación 92</h1>
+      </div>
+      <span class="admin-user" id="admin-user">Usuario: Administrador</span>
+      <button id="logout-btn" style="display:none;">Cerrar sesión</button>
+    </header>
+    <div id="login-panel" class="login-panel">
+      <h2>Iniciar Sesión</h2>
+      <form id="login-form" onsubmit="event.preventDefault(); login();">
+        <input type="text" id="login-usuario" placeholder="Usuario" required>
+        <input type="password" id="login-password" placeholder="Contraseña" required>
+        <button type="submit">Entrar</button>
+      </form>
+      <p id="login-error" style="color:red;display:none;">Usuario o contraseña incorrectos</p>
+    </div>
+    <div id="admin-app" style="display:none;">
+      <nav class="menu">
+        <ul>
+          <li><button onclick="mostrarPanel('carta')">Tomar Pedido</button></li>
+          <li><button onclick="mostrarPanel('pedido')">Pedidos en Cocina</button></li>
+          <li><button onclick="mostrarPanel('factura')">Facturación</button></li>
+          <li><button onclick="mostrarPanel('historial')">Historial</button></li>
+          <li><button onclick="mostrarPanel('reporte')">Reporte Diario</button></li>
+          <li><button onclick="mostrarPanel('adminProductos')">Administrar Productos</button></li>
+        </ul>
+      </nav>
+      <main>
+        <section id="carta" class="panel carta-panel">
+          <img src="img/logo-estacion92.jpeg" alt="Logo Estación 92" class="logo-panel" style="display:block;margin:0 auto 1em auto;height:70px;">
+          <h2>Tomar Pedido</h2>
+          <form id="form-mesa" class="form-mesa" onsubmit="event.preventDefault();">
+            <label for="numero-mesa">Mesa:</label>
+            <select id="numero-mesa" required>
+              <option value="" disabled selected>Selecciona mesa</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </form>
+          <div class="menu-categorias">
+            <button onclick="filtrarCategoria('')">Todos</button>
+            <button onclick="filtrarCategoria('platos')">Platos</button>
+            <button onclick="filtrarCategoria('sandwich')">Sándwiches</button>
+            <button onclick="filtrarCategoria('bebidas')">Bebidas</button>
+            <button onclick="filtrarCategoria('postres')">Postres</button>
+          </div>
+          <div class="menu-productos" id="menu-productos">
+            <!-- Los productos se cargarán dinámicamente aquí -->
+          </div>
+        </section>
+        <div class="pedido-flotante" id="pedido-flotante">
+          <h3>Pedido actual</h3>
+          <ul class="lista-pedido" id="lista-pedido-actual">
+            <!-- Productos seleccionados se mostrarán aquí -->
+          </ul>
+          <button onclick="confirmarPedido()">Confirmar Pedido</button>
+        </div>
+        <section id="pedido" class="panel">
+          <img src="img/logo-estacion92.jpeg" alt="Logo Estación 92" class="logo-panel" style="display:block;margin:0 auto 1em auto;height:70px;">
+          <h2>Pedidos en Cocina</h2>
+          <div class="filtros-pedidos">
+            <div class="filtro-grupo">
+              <label for="filtro-estado">Estado:</label>
+              <select id="filtro-estado" onchange="mostrarPedidosPendientes()">
+                <option value="todos">Todos los pedidos</option>
+                <option value="En cocina">En cocina</option>
+                <option value="Entregado">Entregado</option>
+                <option value="Facturado">Facturado</option>
+              </select>
+            </div>
+          </div>
+          <ul class="lista-pedido" id="lista-pedidos-pendientes">
+            <!-- Pedidos pendientes se mostrarán aquí -->
+          </ul>
+        </section>
+        <section id="factura" class="panel">
+          <img src="img/logo-estacion92.jpeg" alt="Logo Estación 92" class="logo-panel" style="display:block;margin:0 auto 1em auto;height:70px;">
+          <div class="factura-empresa">
+            <h2>Estación 92</h2>
+            <div class="factura-empresa-datos">
+              <span><strong>RUC:</strong> 12345678901</span> &nbsp; | &nbsp;
+              <span><strong>Dirección:</strong> Av. Universitaria 123, Huancayo</span>
+            </div>
+          </div>
+          <div class="factura-detalle" id="factura-detalle">
+            <p>Seleccione un pedido para facturar.</p>
+          </div>
+          
+          <!-- Opciones de tipo de documento -->
+          <div class="tipo-documento" id="tipo-documento-factura" style="display:none;">
+            <label for="tipo-doc">Tipo de documento:</label>
+            <select id="tipo-doc" onchange="toggleDatosCliente()">
+              <option value="boleta">Boleta Simple</option>
+              <option value="factura">Factura con RUC</option>
+            </select>
+          </div>
+          
+          <!-- Datos del cliente (solo para facturas) -->
+          <div class="datos-cliente" id="datos-cliente-factura" style="display:none;">
+            <div class="cliente-campo">
+              <label for="cliente-ruc">RUC del Cliente:</label>
+              <input type="text" id="cliente-ruc" placeholder="Ingrese RUC (11 dígitos)" maxlength="11">
+            </div>
+            <div class="cliente-campo">
+              <label for="cliente-razon">Razón Social:</label>
+              <input type="text" id="cliente-razon" placeholder="Nombre o razón social">
+            </div>
+            <div class="cliente-campo">
+              <label for="cliente-direccion">Dirección:</label>
+              <input type="text" id="cliente-direccion" placeholder="Dirección del cliente">
+            </div>
+          </div>
+          
+          <div class="pago-tipo" id="pago-tipo-factura" style="display:none;">
+            <label for="tipo-pago-factura">Tipo de pago:</label>
+            <select id="tipo-pago-factura">
+              <option value="efectivo">Efectivo</option>
+              <option value="tarjeta">Tarjeta</option>
+              <option value="yape">Yape/Plin</option>
+            </select>
+          </div>
+          <button id="btn-imprimir" style="display:none;">Imprimir Documento</button>
+          <button id="btn-pagar" style="display:none;">Registrar Pago</button>
+        </section>
+        <section id="historial" class="panel">
+          <img src="img/logo-estacion92.jpeg" alt="Logo Estación 92" class="logo-panel" style="display:block;margin:0 auto 1em auto;height:70px;">
+          <h2>Historial de Pedidos Facturados</h2>
+          <ul class="lista-pedido" id="lista-historial">
+            <!-- Historial de pedidos facturados -->
+          </ul>
+        </section>
+        <section id="reporte" class="panel">
+          <img src="img/logo-estacion92.jpeg" alt="Logo Estación 92" class="logo-panel" style="display:block;margin:0 auto 1em auto;height:70px;">
+          <h2>Reporte Diario de Ventas</h2>
+          <div id="reporte-ventas">
+            <!-- Reporte de ventas -->
+          </div>
+        </section>
+        <section id="adminProductos" class="panel">
+          <img src="img/logo-estacion92.jpeg" alt="Logo Estación 92" class="logo-panel" style="display:block;margin:0 auto 1em auto;height:70px;">
+          <h2>Administrar Productos</h2>
+          <button onclick="mostrarFormularioProducto()" style="margin-bottom:1em;">Nuevo producto</button>
+          <div id="form-producto-panel" style="display:none;">
+            <form id="form-producto" onsubmit="event.preventDefault(); guardarProducto();">
+              <input type="hidden" id="producto-id">
+              <label>Nombre:<br><input type="text" id="producto-nombre" required></label><br>
+              <label>Categoría:<br>
+                <select id="producto-categoria" required onchange="toggleStockField()">
+                  <option value="platos">Platos</option>
+                  <option value="sandwich">Sándwiches</option>
+                  <option value="bebidas">Bebidas</option>
+                  <option value="postres">Postres</option>
+                </select>
+              </label><br>
+              <label>Precio (S/):<br><input type="number" id="producto-precio" min="0" step="0.01" required></label><br>
+              <label id="label-stock" style="display:none;">Stock:<br><input type="number" id="producto-stock" min="0"></label><br>
+              <button type="submit">Guardar</button>
+              <button type="button" onclick="cancelarEdicionProducto()">Cancelar</button>
+            </form>
+          </div>
+          <table class="admin-productos-tabla" id="tabla-productos">
+            <thead>
+              <tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+    <script>
+      // --- Autenticación simple ---
+      const USUARIO = 'admin';
+      const PASSWORD = '1234';
+      function login() {
+        const u = document.getElementById('login-usuario').value;
+        const p = document.getElementById('login-password').value;
+        if (u === USUARIO && p === PASSWORD) {
+          document.getElementById('login-panel').style.display = 'none';
+          document.getElementById('admin-app').style.display = 'block';
+          document.getElementById('admin-user').textContent = 'Usuario: ' + u;
+          document.getElementById('logout-btn').style.display = 'inline-block';
+        } else {
+          document.getElementById('login-error').style.display = 'block';
+        }
+      }
+      document.getElementById('logout-btn').onclick = function() {
+        document.getElementById('login-panel').style.display = 'block';
+        document.getElementById('admin-app').style.display = 'none';
+        document.getElementById('login-form').reset();
+        document.getElementById('login-error').style.display = 'none';
+      };
+      // --- Paneles ---
+      function mostrarPanel(id) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('activo'));
+        document.getElementById(id).classList.add('activo');
+        if (id === 'pedido') mostrarPedidosPendientes();
+        if (id === 'historial') mostrarHistorial();
+        if (id === 'reporte') mostrarReporte();
+      }
+
+      // --- Datos de ejemplo de productos ---
+      const productos = [
+        { id: 1, nombre: 'Alitas BBQ', categoria: 'platos', precio: 18, imagen: 'img/alitas-bbq.jpg' },
+        { id: 2, nombre: 'Alitas Brosther', categoria: 'platos', precio: 18, imagen: 'img/alitas-brosther.png' },
+        { id: 3, nombre: 'Pollo a la plancha', categoria: 'platos', precio: 20, imagen: 'img/pollo-plancha.jpeg' },
+        { id: 4, nombre: 'Salchipapa', categoria: 'platos', precio: 12, imagen: 'img/salchipapa.webp' },
+        { id: 5, nombre: 'Salchimix', categoria: 'platos', precio: 15, imagen: 'img/salchimix.jpg' },
+        { id: 6, nombre: 'Hamburguesa Universitario', categoria: 'platos', precio: 14, imagen: 'img/hamburguesa-universitario.jpg' },
+        { id: 7, nombre: 'Hamburguesa Artesanal', categoria: 'platos', precio: 18, imagen: 'img/hamburguesa-artesanal.jpg' },
+        { id: 8, nombre: 'Pan con chicharrón', categoria: 'sandwich', precio: 10, imagen: 'img/pan-chicharron.jpg' },
+        { id: 9, nombre: 'Pan con pollo', categoria: 'sandwich', precio: 9, imagen: 'img/pan-pollo.jpg' },
+        { id: 10, nombre: 'Sándwich mixto', categoria: 'sandwich', precio: 8, imagen: 'img/sandwich-mixto.jpg' },
+        { id: 11, nombre: 'Pan con palta', categoria: 'sandwich', precio: 7, imagen: 'img/pan-palta.png' },
+        { id: 12, nombre: 'Keke', categoria: 'postres', precio: 6, imagen: 'img/keke.jpg' },
+        { id: 13, nombre: 'Café americano', categoria: 'bebidas', precio: 5, imagen: 'img/cafe-americano.jpeg' },
+        { id: 14, nombre: 'Té', categoria: 'bebidas', precio: 4, imagen: 'img/te.jpg' },
+        { id: 15, nombre: 'Anís', categoria: 'bebidas', precio: 4, imagen: 'img/anis.jpg' },
+        { id: 16, nombre: 'Manzanilla', categoria: 'bebidas', precio: 4, imagen: 'img/manzanilla.jpg' },
+        { id: 17, nombre: 'Gaseosa', categoria: 'bebidas', precio: 6, imagen: 'img/gaseosa.png' },
+        { id: 18, nombre: 'Chocolotada', categoria: 'bebidas', precio: 7, imagen: 'img/chocolotada.jpg' },
+        { id: 19, nombre: 'Jugo de manzana', categoria: 'bebidas', precio: 7, imagen: 'img/jugo-manzana.jpg' }
+      ];
+
+      let categoriaActual = '';
+      let pedidoActual = [];
+      let pedidosPendientes = [];
+      let historialFacturados = [];
+      // Cargar historial guardado desde localStorage
+      const historialGuardado = localStorage.getItem('historialFacturados');
+      if (historialGuardado) {
+        historialFacturados = JSON.parse(historialGuardado);
+      }
+      // Agregar pedido de prueba para verificar el filtro
+      pedidosPendientes.push({
+        productos: [
+          { id: 1, nombre: 'Alitas BBQ', categoria: 'platos', precio: 18, imagen: 'img/alitas-bbq.jpg' },
+          { id: 13, nombre: 'Café americano', categoria: 'bebidas', precio: 5, imagen: 'img/cafe-americano.jpeg' }
+        ],
+        estado: 'En cocina',
+        mesa: '3',
+        hora: '14:30',
+        facturado: false
+      });
+      pedidosPendientes.push({
+        productos: [
+          { id: 6, nombre: 'Hamburguesa Universitario', categoria: 'platos', precio: 14, imagen: 'img/hamburguesa-universitario.jpg' }
+        ],
+        estado: 'Entregado',
+        mesa: '5',
+        hora: '15:15',
+        facturado: false
+      });
+      let pedidoParaFacturar = null;
+      let mesaActual = '';
+
+      function filtrarCategoria(cat) {
+          categoriaActual = cat;
+          mostrarProductos();
+      }
+
+
+
+      function mostrarProductos() {
+          const contenedor = document.getElementById('menu-productos');
+          contenedor.innerHTML = '';
+          
+          const filtrados = categoriaActual ? productos.filter(p => p.categoria === categoriaActual) : productos;
+          
+          if (filtrados.length === 0) {
+              contenedor.innerHTML = '<p style="text-align: center; color: #666; padding: 2em;">No hay productos en esta categoría.</p>';
+              return;
+          }
+          
+          filtrados.forEach(prod => {
+              const div = document.createElement('div');
+              div.className = 'producto';
+              div.innerHTML = `
+                  <div class="producto-imagen">
+                    <img src="${prod.imagen}" alt="${prod.nombre}" onerror="this.src='img/logo-estacion92.jpeg'">
+                  </div>
+                  <div class="producto-info">
+                    <h3>${prod.nombre}</h3>
+                    <span class="precio">S/ ${prod.precio.toFixed(2)}</span>
+                    <button onclick="agregarAlPedido(${prod.id})">Agregar</button>
+                  </div>
+              `;
+              contenedor.appendChild(div);
+          });
+      }
+
+      function agregarAlPedido(id) {
+          const prod = productos.find(p => p.id === id);
+          if (prod) {
+              pedidoActual.push(prod);
+              actualizarListaPedidoActual();
+          }
+      }
+
+      function actualizarListaPedidoActual() {
+          const lista = document.getElementById('lista-pedido-actual');
+          lista.innerHTML = '';
+          if (pedidoActual.length === 0) {
+              lista.innerHTML = '<li class="pedido-vacio">No hay productos en el pedido actual.</li>';
+              return;
+          }
+          
+          // Agrupar productos por nombre para mostrar cantidad
+          const productosAgrupados = {};
+          pedidoActual.forEach(prod => {
+              if (productosAgrupados[prod.nombre]) {
+                  productosAgrupados[prod.nombre].cantidad++;
+                  productosAgrupados[prod.nombre].precioTotal += prod.precio;
+              } else {
+                  productosAgrupados[prod.nombre] = {
+                      ...prod,
+                      cantidad: 1,
+                      precioTotal: prod.precio
+                  };
+              }
+          });
+          
+          // Crear elementos para cada producto agrupado
+          Object.values(productosAgrupados).forEach((prod, idx) => {
+              const li = document.createElement('li');
+              li.className = 'pedido-item';
+              li.innerHTML = `
+                  <div class="pedido-item-info">
+                      <div class="pedido-item-nombre">
+                          <span class="producto-nombre">${prod.nombre}</span>
+                          <span class="producto-cantidad">x${prod.cantidad}</span>
+                      </div>
+                      <div class="pedido-item-precio">
+                          <span class="precio-unitario">S/ ${prod.precio.toFixed(2)} c/u</span>
+                          <span class="precio-total">S/ ${prod.precioTotal.toFixed(2)}</span>
+                      </div>
+                  </div>
+                  <div class="pedido-item-acciones">
+                      <button class="btn-eliminar-item" onclick="eliminarDelPedidoActual(${idx})" title="Eliminar">
+                          <span class="btn-text">Eliminar</span>
+                      </button>
+                  </div>
+              `;
+              lista.appendChild(li);
+          });
+          
+          // Agregar total del pedido
+          const total = pedidoActual.reduce((sum, prod) => sum + prod.precio, 0);
+          const liTotal = document.createElement('li');
+          liTotal.className = 'pedido-total';
+          liTotal.innerHTML = `
+              <div class="total-info">
+                  <span class="total-label">Total del Pedido:</span>
+                  <span class="total-precio">S/ ${total.toFixed(2)}</span>
+              </div>
+          `;
+          lista.appendChild(liTotal);
+      }
+
+      function eliminarDelPedidoActual(idx) {
+          // Encontrar el producto original por índice
+          const productosAgrupados = {};
+          pedidoActual.forEach(prod => {
+              if (productosAgrupados[prod.nombre]) {
+                  productosAgrupados[prod.nombre].indices.push(productosAgrupados[prod.nombre].indices.length);
+              } else {
+                  productosAgrupados[prod.nombre] = {
+                      ...prod,
+                      indices: [0]
+                  };
+              }
+          });
+          
+          const productosArray = Object.values(productosAgrupados);
+          if (productosArray[idx]) {
+              const productoAEliminar = productosArray[idx];
+              // Eliminar el primer producto con ese nombre
+              const indexToRemove = pedidoActual.findIndex(p => p.nombre === productoAEliminar.nombre);
+              if (indexToRemove !== -1) {
+                  pedidoActual.splice(indexToRemove, 1);
+                  actualizarListaPedidoActual();
+              }
+          }
+      }
+
+      // --- Confirmar Pedido ---
+      function confirmarPedido() {
+        try {
+          const inputMesa = document.getElementById('numero-mesa');
+          if (!inputMesa) {
+            alert('Error: No se encontró el campo de número de mesa.');
+            return;
+          }
+          if (!inputMesa.value) {
+            alert('Ingrese el número de mesa.');
+            inputMesa.focus();
+            return;
+          }
+          if (!Array.isArray(pedidoActual)) {
+            alert('Error interno: pedidoActual no es un arreglo.');
+            return;
+          }
+          if (pedidoActual.length === 0) {
+            alert('No hay productos en el pedido.');
+            return;
+          }
+          const hora = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          pedidosPendientes.push({ productos: [...pedidoActual], estado: 'En cocina', mesa: inputMesa.value, hora, facturado: false });
+          pedidoActual = [];
+          actualizarListaPedidoActual();
+          if (typeof mostrarPedidosPendientes === 'function') {
+            mostrarPedidosPendientes();
+          } else {
+            alert('Error: No se puede actualizar la lista de pedidos.');
+          }
+          inputMesa.value = '';
+        } catch (err) {
+          alert('Ocurrió un error inesperado al confirmar el pedido. Por favor, recarga la página.\n\nDetalle: ' + (err && err.message ? err.message : err));
+        }
+      }
+
+      // --- Mostrar Pedidos con Filtro de Estado ---
+      function mostrarPedidosPendientes() {
+        const lista = document.getElementById('lista-pedidos-pendientes');
+        const filtroEstado = document.getElementById('filtro-estado').value;
+        lista.innerHTML = '';
+        
+        let filtrados = pedidosPendientes;
+        if (filtroEstado !== 'todos') {
+          filtrados = pedidosPendientes.filter(p => p.estado === filtroEstado);
+        }
+        
+        if (filtrados.length === 0) {
+          lista.innerHTML = '<li>No hay pedidos que coincidan con el filtro seleccionado.</li>';
+          return;
+        }
+        
+        filtrados.forEach((pedido, i) => {
+          const li = document.createElement('li');
+          li.className = 'pedido-card';
+          let badgeClass = 'badge-cocina';
+          if (pedido.estado === 'Entregado') badgeClass = 'badge-entregado';
+          if (pedido.estado === 'Facturado') badgeClass = 'badge-facturado';
+          li.innerHTML = `
+            <div class="pedido-header">
+              <span class="pedido-mesa">Mesa <strong>${pedido.mesa}</strong></span>
+              <span class="pedido-hora">${pedido.hora}</span>
+              <span class="pedido-estado badge ${badgeClass}">${pedido.estado}</span>
+            </div>
+            <ul class="pedido-productos">
+              ${pedido.productos.map(p => `<li>${p.nombre}</li>`).join('')}
+            </ul>
+            <div class="pedido-acciones">
+              <button onclick="marcarEntregado(${i})">Entregado</button>
+              <button onclick="enviarAFactura(${i})" ${pedido.estado!=='Entregado'?'disabled':''}>Facturar</button>
+              <button onclick="editarPedido(${i})" ${pedido.estado!=='En cocina'?'disabled':''}>Editar</button>
+              <button onclick="cancelarPedido(${i})" ${pedido.estado!=='En cocina'?'disabled':''}>Cancelar</button>
+            </div>
+          `;
+          lista.appendChild(li);
+        });
+      }
+      // --- Editar Pedido ---
+      function editarPedido(idx) {
+        const pedido = pedidosPendientes[idx];
+        if (pedido.estado !== 'En cocina') {
+          // Si el pedido está entregado o facturado, volver a 'En cocina' para permitir edición
+          pedido.estado = 'En cocina';
+        }
+        document.getElementById('numero-mesa').value = pedido.mesa;
+        pedidoActual = [...pedido.productos];
+        actualizarListaPedidoActual();
+        pedidosPendientes.splice(idx, 1);
+        mostrarPedidosPendientes();
+        mostrarPanel('carta');
+      }
+      // --- Cancelar Pedido ---
+      function cancelarPedido(idx) {
+        if (confirm('¿Seguro que desea cancelar este pedido?')) {
+          pedidosPendientes.splice(idx, 1);
+          mostrarPedidosPendientes();
+        }
+      }
+      // --- Marcar Entregado ---
+      function marcarEntregado(idx) {
+        if (pedidosPendientes[idx].estado === 'En cocina') {
+          pedidosPendientes[idx].estado = 'Entregado';
+        } else if (pedidosPendientes[idx].estado === 'Entregado') {
+          pedidosPendientes[idx].estado = 'En cocina';
+        }
+        mostrarPedidosPendientes();
+      }
+      // --- Facturar Pedido ---
+      function enviarAFactura(idx) {
+        pedidosPendientes[idx].estado = 'Facturado';
+        pedidosPendientes[idx].facturado = true;
+        pedidoParaFacturar = pedidosPendientes[idx];
+        mostrarPedidosPendientes();
+        mostrarHistorial();
+        mostrarFactura(pedidoParaFacturar);
+        mostrarPanel('factura');
+      }
+      // --- Mostrar Factura ---
+      function mostrarFactura(pedido) {
+        const detalle = document.getElementById('factura-detalle');
+        const btnPagar = document.getElementById('btn-pagar');
+        const btnImprimir = document.getElementById('btn-imprimir');
+        const pagoTipoDiv = document.getElementById('pago-tipo-factura');
+        const tipoDocDiv = document.getElementById('tipo-documento-factura');
+        const datosClienteDiv = document.getElementById('datos-cliente-factura');
+        
+        if (!pedido || !pedido.productos || pedido.productos.length === 0) {
+          detalle.innerHTML = '<p>No hay datos para facturar.</p>';
+          btnPagar.style.display = 'none';
+          btnImprimir.style.display = 'none';
+          pagoTipoDiv.style.display = 'none';
+          tipoDocDiv.style.display = 'none';
+          datosClienteDiv.style.display = 'none';
+          return;
+        }
+        let total = pedido.productos.reduce((acc, p) => acc + p.precio, 0);
+        detalle.innerHTML = `
+          <div class="factura-info">
+            <span><strong>Mesa:</strong> ${pedido.mesa}</span>
+            <span><strong>Hora:</strong> ${pedido.hora}</span>
+          </div>
+          <table class="factura-tabla">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pedido.productos.map(p => `<tr><td>${p.nombre}</td><td>1</td><td>S/ ${p.precio.toFixed(2)}</td><td>S/ ${p.precio.toFixed(2)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+          <div class="factura-totales">
+            <span>Total: <strong>S/ ${total.toFixed(2)}</strong></span>
+          </div>
+        `;
+        btnPagar.style.display = 'inline-block';
+        btnImprimir.style.display = 'none'; // Solo mostrar después de pagar
+        pagoTipoDiv.style.display = 'block';
+        tipoDocDiv.style.display = 'block';
+        datosClienteDiv.style.display = 'none'; // Inicialmente oculto
+        btnPagar.disabled = false;
+        btnPagar.onclick = function() {
+          const tipoPago = document.getElementById('tipo-pago-factura').value;
+          pedido.tipoPago = tipoPago;
+          // Agregar al historial solo después de registrar el pago
+          historialFacturados.push({...pedido, fecha: new Date().toLocaleDateString()});
+          localStorage.setItem('historialFacturados', JSON.stringify(historialFacturados));
+          mostrarHistorial();
+          alert('Pago registrado. Ahora puede imprimir la factura.');
+          btnImprimir.style.display = 'inline-block';
+          btnPagar.disabled = true;
+        };
+        btnImprimir.onclick = function() {
+          const tipoDoc = document.getElementById('tipo-doc').value;
+          const clienteRuc = document.getElementById('cliente-ruc').value;
+          const clienteRazon = document.getElementById('cliente-razon').value;
+          const clienteDireccion = document.getElementById('cliente-direccion').value;
+          
+          if (tipoDoc === 'factura' && (!clienteRuc || !clienteRazon || !clienteDireccion)) {
+            alert('Para facturas con RUC, debe completar todos los datos del cliente.');
+            return;
+          }
+          
+          imprimirDocumento(pedido, total, tipoDoc, clienteRuc, clienteRazon, clienteDireccion);
+        };
+      }
+      // --- Toggle Datos Cliente ---
+      function toggleDatosCliente() {
+        const tipoDoc = document.getElementById('tipo-doc').value;
+        const datosClienteDiv = document.getElementById('datos-cliente-factura');
+        
+        if (tipoDoc === 'factura') {
+          datosClienteDiv.style.display = 'block';
+        } else {
+          datosClienteDiv.style.display = 'none';
+          // Limpiar campos
+          document.getElementById('cliente-ruc').value = '';
+          document.getElementById('cliente-razon').value = '';
+          document.getElementById('cliente-direccion').value = '';
+        }
+      }
+
+      // --- Imprimir Documento ---
+      function imprimirDocumento(pedido, total, tipoDoc, clienteRuc, clienteRazon, clienteDireccion) {
+        const fecha = new Date().toLocaleDateString();
+        const hora = new Date().toLocaleTimeString();
+        const titulo = tipoDoc === 'factura' ? 'Factura - Estación 92' : 'Boleta - Estación 92';
+        const win = window.open('', 'Documento', 'width=400,height=600');
+        
+        // Generar contenido según el tipo de documento
+        let clienteInfo = '';
+        if (tipoDoc === 'factura') {
+          clienteInfo = `
+            <div class="cliente-info">
+              <div class="cliente-titulo">DATOS DEL CLIENTE:</div>
+              <div class="cliente-dato">RUC: ${clienteRuc}</div>
+              <div class="cliente-dato">Razón Social: ${clienteRazon}</div>
+              <div class="cliente-dato">Dirección: ${clienteDireccion}</div>
+            </div>
+          `;
+        }
+        
+        win.document.write(`
+          <html>
+          <head>
+            <title>${titulo}</title>
+            <style>
+              @media print {
+                body { margin: 0; padding: 10px; }
+                .no-print { display: none; }
+              }
+              body { 
+                font-family: 'Courier New', monospace; 
+                font-size: 12px; 
+                margin: 0; 
+                padding: 10px; 
+                background: white;
+                width: 80mm;
+                max-width: 80mm;
+              }
+              .header { 
+                text-align: center; 
+                border-bottom: 1px dashed #000; 
+                padding-bottom: 10px; 
+                margin-bottom: 10px;
+              }
+              .logo { 
+                height: 50px; 
+                margin: 0 auto 5px auto; 
+                display: block;
+              }
+              .empresa { 
+                font-weight: bold; 
+                font-size: 14px; 
+                margin: 5px 0;
+              }
+              .ruc { 
+                font-size: 10px; 
+                margin: 2px 0;
+              }
+              .direccion { 
+                font-size: 10px; 
+                margin: 2px 0;
+              }
+              .tipo-doc { 
+                font-size: 11px; 
+                margin: 5px 0;
+                text-align: center;
+                font-weight: bold;
+                text-transform: uppercase;
+              }
+              .cliente-info { 
+                margin: 10px 0;
+                border-bottom: 1px dashed #000;
+                padding-bottom: 10px;
+                font-size: 10px;
+              }
+              .cliente-titulo { 
+                font-weight: bold; 
+                margin-bottom: 5px;
+                text-align: center;
+              }
+              .cliente-dato { 
+                margin: 2px 0;
+              }
+              .fecha-hora { 
+                font-size: 10px; 
+                margin: 5px 0;
+                text-align: center;
+              }
+              .mesa { 
+                font-size: 11px; 
+                margin: 5px 0;
+                text-align: center;
+                font-weight: bold;
+              }
+              .productos { 
+                margin: 10px 0;
+                border-bottom: 1px dashed #000;
+                padding-bottom: 10px;
+              }
+              .producto { 
+                display: flex; 
+                justify-content: space-between; 
+                margin: 3px 0;
+                font-size: 11px;
+              }
+              .producto-nombre { 
+                flex: 1; 
+                margin-right: 10px;
+              }
+              .producto-precio { 
+                text-align: right; 
+                font-weight: bold;
+              }
+              .totales { 
+                margin: 10px 0;
+                border-top: 1px dashed #000;
+                padding-top: 10px;
+              }
+              .total-linea { 
+                display: flex; 
+                justify-content: space-between; 
+                margin: 2px 0;
+                font-size: 11px;
+              }
+              .total-final { 
+                font-weight: bold; 
+                font-size: 12px;
+                border-top: 1px solid #000;
+                padding-top: 5px;
+                margin-top: 5px;
+              }
+              .pago { 
+                margin: 10px 0;
+                text-align: center;
+                font-size: 11px;
+              }
+              .gracias { 
+                text-align: center; 
+                margin: 15px 0;
+                font-size: 11px;
+                font-weight: bold;
+              }
+              .separador { 
+                text-align: center; 
+                margin: 10px 0;
+                font-size: 10px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <img src='${window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/img/logo-estacion92.jpeg')}' class='logo' alt='Logo Estación 92'>
+              <div class="empresa">ESTACIÓN 92</div>
+              <div class="ruc">RUC: 12345678901</div>
+              <div class="direccion">Av. Universitaria 123, Huancayo</div>
+            </div>
+            
+            <div class="tipo-doc">
+              ${tipoDoc.toUpperCase()}
+            </div>
+            
+            ${clienteInfo}
+            
+            <div class="fecha-hora">
+              Fecha: ${fecha} | Hora: ${hora}
+            </div>
+            
+            <div class="mesa">
+              MESA: ${pedido.mesa}
+            </div>
+            
+            <div class="productos">
+              ${pedido.productos.map(p => `
+                <div class="producto">
+                  <span class="producto-nombre">${p.nombre}</span>
+                  <span class="producto-precio">S/ ${p.precio.toFixed(2)}</span>
+                </div>
+              `).join('')}
+            </div>
+            
+            <div class="totales">
+              <div class="total-linea total-final">
+                <span>TOTAL:</span>
+                <span>S/ ${total.toFixed(2)}</span>
+              </div>
+            </div>
+            
+            <div class="pago">
+              <strong>PAGO: ${pedido.tipoPago.toUpperCase()}</strong>
+            </div>
+            
+            <div class="gracias">
+              ¡GRACIAS POR SU PREFERENCIA!
+            </div>
+            
+            <div class="separador">
+              * * * * * * * * * * * * * * * * * * * *
+            </div>
+            
+            <script>window.print();<\/script>
+          </body>
+          </html>
+        `);
+        win.document.close();
+      }
+      // --- Mostrar Historial ---
+      function mostrarHistorial() {
+        const lista = document.getElementById('lista-historial');
+        lista.innerHTML = '';
+        // Botón para borrar historial (solo uno, arriba de la lista)
+        let btnBorrar = document.getElementById('btn-borrar-historial');
+        if (!btnBorrar) {
+          btnBorrar = document.createElement('button');
+          btnBorrar.textContent = 'Borrar historial';
+          btnBorrar.id = 'btn-borrar-historial';
+          btnBorrar.className = 'btn-borrar-historial';
+          btnBorrar.onclick = borrarHistorial;
+          lista.parentNode.insertBefore(btnBorrar, lista);
+        }
+        if (historialFacturados.length === 0) {
+          lista.innerHTML = '<li>No hay pedidos facturados.</li>';
+          return;
+        }
+        historialFacturados.forEach((pedido, i) => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <strong>Mesa ${pedido.mesa}</strong> | ${pedido.hora} | <span class='estado'>${pedido.estado}</span> | <span>${pedido.fecha}</span><br>
+            ${pedido.productos.map(p => p.nombre).join(', ')} | <strong>Pago:</strong> ${pedido.tipoPago || ''}
+          `;
+          lista.appendChild(li);
+        });
+      }
+      // --- Reporte Diario ---
+      function mostrarReporte() {
+        const hoy = new Date().toLocaleDateString();
+        const pedidosHoy = historialFacturados.filter(p => p.fecha === hoy);
+        let totalVentas = 0;
+        let porTipoPago = { efectivo: 0, tarjeta: 0, yape: 0 };
+        pedidosHoy.forEach(p => {
+          let total = p.productos.reduce((acc, prod) => acc + prod.precio, 0);
+          totalVentas += total;
+          if (porTipoPago[p.tipoPago] !== undefined) porTipoPago[p.tipoPago] += total;
+        });
+        const div = document.getElementById('reporte-ventas');
+        div.innerHTML = `
+          <p><strong>Fecha:</strong> ${hoy}</p>
+          <p><strong>Total de ventas:</strong> S/ ${totalVentas.toFixed(2)}</p>
+          <ul>
+            <li>Efectivo: S/ ${porTipoPago.efectivo.toFixed(2)}</li>
+            <li>Tarjeta: S/ ${porTipoPago.tarjeta.toFixed(2)}</li>
+            <li>Yape/Plin: S/ ${porTipoPago.yape.toFixed(2)}</li>
+          </ul>
+          <p><strong>Pedidos facturados hoy:</strong> ${pedidosHoy.length}</p>
+        `;
+      }
+
+      // Inicializar
+      cargarProductos();
+      mostrarProductos();
+      actualizarListaPedidoActual();
+
+      // Mostrar/ocultar el pedido flotante solo en el panel de carta
+      function actualizarVisibilidadPedidoFlotante() {
+          const flotante = document.getElementById('pedido-flotante');
+          const cartaPanel = document.getElementById('carta');
+          if (cartaPanel.classList.contains('activo')) {
+              flotante.style.display = 'block';
+          } else {
+              flotante.style.display = 'none';
+          }
+      }
+      // Hook para paneles
+      const paneles = document.querySelectorAll('.panel');
+      paneles.forEach(panel => {
+          const observer = new MutationObserver(actualizarVisibilidadPedidoFlotante);
+          observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+      });
+      actualizarVisibilidadPedidoFlotante();
+
+      // --- Borrar Historial ---
+      function borrarHistorial() {
+        if (confirm('¿Seguro que deseas borrar el historial?')) {
+          historialFacturados = [];
+          localStorage.removeItem('historialFacturados');
+          mostrarHistorial();
+        }
+      }
+
+      // --- Persistencia de productos en localStorage ---
+      function cargarProductos() {
+        const guardados = localStorage.getItem('productos');
+        if (guardados) {
+          try {
+            const arr = JSON.parse(guardados);
+            if (Array.isArray(arr) && arr.length > 0) {
+              // Solo cargar si hay productos válidos
+              productos.length = 0;
+              arr.forEach(p => productos.push(p));
+            }
+          } catch (error) {
+            console.log('Error al cargar productos del localStorage, usando productos por defecto');
+          }
+        }
+      }
+      function guardarProductos() {
+        localStorage.setItem('productos', JSON.stringify(productos));
+      }
+      cargarProductos();
+
+      // --- Panel de administración de productos ---
+      function mostrarPanelAdminProductos() {
+        mostrarPanel('adminProductos');
+        renderTablaProductos();
+        document.getElementById('form-producto-panel').style.display = 'none';
+      }
+      function renderTablaProductos() {
+        const tbody = document.querySelector('#tabla-productos tbody');
+        tbody.innerHTML = '';
+        productos.forEach((prod, idx) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${prod.nombre}</td>
+            <td>${categoriaNombre(prod.categoria)}</td>
+            <td>S/ ${Number(prod.precio).toFixed(2)}</td>
+            <td>${prod.stock !== undefined && prod.stock !== null && prod.stock !== '' ? prod.stock : ''}</td>
+            <td>
+              <button class='btn-admin' onclick="editarProducto(${idx})">Editar</button>
+              <button class='btn-admin btn-eliminar' onclick="eliminarProducto(${idx})">Eliminar</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+      function categoriaNombre(cat) {
+        if (cat==='platos') return 'Platos';
+        if (cat==='sandwich') return 'Sándwiches';
+        if (cat==='bebidas') return 'Bebidas';
+        if (cat==='postres') return 'Postres';
+        return cat;
+      }
+      function mostrarFormularioProducto(prod) {
+        document.getElementById('form-producto-panel').style.display = 'block';
+        document.getElementById('form-producto').reset();
+        document.getElementById('producto-id').value = prod && prod.id ? prod.id : '';
+        document.getElementById('producto-nombre').value = prod && prod.nombre ? prod.nombre : '';
+        document.getElementById('producto-categoria').value = prod && prod.categoria ? prod.categoria : 'platos';
+        document.getElementById('producto-precio').value = prod && prod.precio ? prod.precio : '';
+        document.getElementById('producto-stock').value = prod && prod.stock ? prod.stock : '';
+        document.getElementById('label-stock').style.display = 'block';
+      }
+      function cancelarEdicionProducto() {
+        document.getElementById('form-producto-panel').style.display = 'none';
+      }
+      function guardarProducto() {
+        const id = document.getElementById('producto-id').value;
+        const nombre = document.getElementById('producto-nombre').value.trim();
+        const categoria = document.getElementById('producto-categoria').value;
+        const precio = parseFloat(document.getElementById('producto-precio').value);
+        const stock = document.getElementById('producto-stock').value ? parseInt(document.getElementById('producto-stock').value) : undefined;
+        if (!nombre || isNaN(precio) || precio < 0) {
+          alert('Nombre y precio válidos son obligatorios.');
+          return;
+        }
+        let prod;
+        if (id) {
+          prod = productos.find(p => p.id == id);
+          if (prod) {
+            prod.nombre = nombre;
+            prod.categoria = categoria;
+            prod.precio = precio;
+            if (stock !== undefined && stock !== null && stock !== '') prod.stock = stock;
+            else delete prod.stock;
+          }
+        } else {
+          const nuevo = {
+            id: Date.now(),
+            nombre,
+            categoria,
+            precio
+          };
+          if (stock !== undefined && stock !== null && stock !== '') nuevo.stock = stock;
+          productos.push(nuevo);
+        }
+        guardarProductos();
+        renderTablaProductos();
+        document.getElementById('form-producto-panel').style.display = 'none';
+      }
+      function editarProducto(idx) {
+        mostrarFormularioProducto(productos[idx]);
+      }
+      function eliminarProducto(idx) {
+        if (confirm('¿Seguro que deseas eliminar este producto?')) {
+          productos.splice(idx, 1);
+          guardarProductos();
+          renderTablaProductos();
+        }
+      }
+      function toggleStockField() {
+        const cat = document.getElementById('producto-categoria').value;
+        document.getElementById('label-stock').style.display = (cat === 'bebidas') ? 'block' : 'none';
+      }
+
+      // Hook para mostrar el panel de administración desde el menú
+      document.querySelector('button[onclick="mostrarPanel(\'adminProductos\')"]').addEventListener('click', mostrarPanelAdminProductos);
+    </script>
+</body>
+
+</html>
